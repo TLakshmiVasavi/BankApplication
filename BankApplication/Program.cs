@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using BankApplication.Interfaces;
 using BankApplication.Models;
 using BankApplication.Services;
@@ -7,7 +8,6 @@ namespace BankApplication
 {
     class Program
     {
-        static IUserManager userManager = new UserManager();
         static IBankManager bankManager = new BankManager();
         static IAccountManager accountManager = new AccountManager();
 
@@ -87,19 +87,17 @@ namespace BankApplication
                     case 1:
                         Console.WriteLine("Please enter the name");
                         string name = Reader.ReadString();
-                        Console.WriteLine("Please enter the password");
-                        string password = Reader.ReadPassword();
                         Console.WriteLine("Please enter age");
                         int age = Reader.ReadInt(1, 100);
                         Console.WriteLine("Please enter mail ");
                         string mail = Reader.ReadMail();
                         Console.WriteLine("Please enter Address");
-                        string address = Reader.ReadMail();
+                        string address = Reader.ReadString();
                         Console.WriteLine("Please enter the gender 1.Female 2.Male");
                         string gender = Reader.ReadGender();
-                        string role = "Staff";
-                        Staff employee = (Staff)userManager.CreateUser(name, age, gender, mail, address, role);
-                        bankManager.AddStaff(bank, employee);
+                        Console.WriteLine("Please enter the salary");
+                        float salary = Reader.ReadFloat();
+                        bankManager.AddStaff(bank, name, age, gender, mail, address,salary);
                         break;
                     case 2:
                         Console.WriteLine("Please enter the employee id");
@@ -121,6 +119,8 @@ namespace BankApplication
         static void EmployeeServices(Bank bank)
         {
             int choice;
+            string accountId;
+            Account account;
             do
             {
                 Console.WriteLine("Please enter your choice\n" +
@@ -140,26 +140,57 @@ namespace BankApplication
                     case 1:
                         Console.WriteLine("Please enter the name");
                         string name = Reader.ReadString();
-                        Console.WriteLine("Please enter the password");
-                        string password = Reader.ReadPassword();
                         Console.WriteLine("Please enter age");
                         int age = Reader.ReadInt(1, 100);
                         Console.WriteLine("Please enter mail ");
                         string mail = Reader.ReadMail();
                         Console.WriteLine("Please enter Address");
-                        string address = Reader.ReadMail();
+                        string address = Reader.ReadString();
                         Console.WriteLine("Please enter the gender 1.Female 2.Male");
                         string gender = Reader.ReadGender();
-                        string role = "AccountHolder";
-                        AccountHolder accountHolder = (AccountHolder)userManager.CreateUser(name, age, gender, mail, address, role);
-                        bankManager.CreateAccount(accountHolder, bank);
+                        bankManager.CreateAccount(bank, name, age, gender, mail, address);
                         break;
                     case 2:
-                        //UpdateAccount(bank);
+                        Console.WriteLine("Please enter the account id ");
+                        accountId = Reader.ReadString();
+                        account = bankManager.FindAccount(accountId, bank);
+                        User user = new User();
+                        do
+                        {
+                            Console.WriteLine("Please choose the details\n" +
+                                "1.Name\n" +
+                                "2.Password\n" +
+                                "3.Age\n" +
+                                "4.mail\n" +
+                                "5.Address\n" +
+                                "6.Go Back");
+                            choice = Reader.ReadInt(1, 6);
+                            switch (choice)
+                            {
+                                case 1:
+                                    user.Name=Reader.ReadString();
+                                    break;
+                                case 2:
+                                    user.Password=Reader.ReadPassword();
+                                    break;
+                                case 3:
+                                    user.Age=Reader.ReadInt(1,100);
+                                    break;
+                                case 4:
+                                    user.Mail=Reader.ReadMail();
+                                    break;
+                                case 5:
+                                    user.Address=Reader.ReadString();
+                                    break;
+                                case 6:
+                                    break;
+                            }
+                        } while (choice != 6);
+                        accountManager.UpdateAccount(user,account);
                         break;
                     case 3:
                         Console.WriteLine("Please enter the account id");
-                        string accountId = Console.ReadLine();
+                        accountId = Console.ReadLine();
                         bankManager.DeleteAccount(bank, accountId);
                         break;
                     case 4:
@@ -179,20 +210,19 @@ namespace BankApplication
                         bankManager.AssignChargesToOthers(bank, serviceChargesToOthers);
                         break;
                     case 7:
-                        accountManager.ViewTransactions(accountId, bank, false);
+                        Console.WriteLine("Please enter the account id ");
+                        accountId = Reader.ReadString();
+                        account = bankManager.FindAccount(accountId, bank);
+                        ViewTransactions(account, false);
                         break;
                     case 8:
-                        if (accountManager.RevertTransaction(accountId, transactionId, bank))
-                        {
-                            Console.WriteLine("Transaction Reverted SuccessFully");
-                        }
-                        else
-                        {
-                            Console.WriteLine("Sorry,The Transaction can't be reverted");
-                        }
+                        Console.WriteLine("Revert Transaction ");
                         break;
                     case 9:
-                        accountManager.ViewTransactions(accountId, bank, true);
+                        Console.WriteLine("Please enter the account id ");
+                        accountId = Reader.ReadString();
+                        account=bankManager.FindAccount(accountId, bank);
+                        ViewTransactions(account, true);
                         break;
                     case 10:
                         break;
@@ -240,19 +270,66 @@ namespace BankApplication
                         }
                         break;
                     case 3:
-                        accountManager.Transfer(account, bank);
-                        accountManager.viewBalance();
+                        Console.WriteLine("Please enter the bank id of receiver");
+                        string receiverBankId = Reader.ReadString();
+                        Console.WriteLine("Please enter the account id of receiver");
+                        string receiverAccountId = Reader.ReadString();
+                        Console.WriteLine("Please enter the amount to transfer");
+                        float transferAmount = Reader.ReadFloat();
+                        Account receiverAccount;
+                        if (account.bankId == receiverBankId)
+                        {
+                            if (receiverAccountId == account.Id)
+                            {
+                                Console.WriteLine("Sorry,You can't transfer money to your account");
+                            }
+                            else
+                            {
+                                receiverAccount = bankManager.FindAccount(receiverAccountId, bank);
+                                if (receiverAccount == null)
+                                {
+                                    Console.WriteLine("The account with given id doesn't exist");
+                                }
+                                else
+                                {
+                                    float charges=bankManager.GetCharges(bank, transferAmount, true);
+                                    accountManager.SendMoney(account, transferAmount, charges, receiverBankId, receiverAccountId);
+                                    accountManager.ReceiveMoney(receiverAccount, transferAmount, charges, account.bankId, account.Id);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            float charges = bankManager.GetCharges(bank, transferAmount, false);
+                            accountManager.SendMoney(account, transferAmount, charges, receiverBankId, receiverAccountId);
+                        }
                         break;
                     case 4:
-                        accountManager.showTransactions(false);
+                        ViewTransactions(account,false);
                         break;
                     case 5:
-                        accountManager.viewBalance();
+                        float balance=accountManager.ViewBalance(account);
+                        Console.WriteLine("The available balance is " + balance);
                         break;
                     case 6:
                         break;
                 }
             } while (choice != 6);
+        }
+        static void ViewTransactions(Account account,bool isReverted)
+        {
+            List<Transaction> transactions = accountManager.ViewTransactions(account,isReverted);
+            if (transactions.Count == 0)
+            {
+                Console.WriteLine("No Transactions are occured");
+            }
+            else
+            {
+                foreach (Transaction transaction in transactions)
+                {
+                    Console.WriteLine("A sum of " + transaction.Amount + " is " + transaction.Type + " with transaction id " + transaction.Id);
+                }
+            }
         }
     }
 }

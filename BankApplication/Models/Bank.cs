@@ -13,19 +13,5 @@ namespace BankApplication.Models
         public ServiceCharges Charges;
         public ServiceCharges ChargesToOthers;
         public List<Currency> Currencies;
-        public Bank(string name)
-        {
-            Employees = new List<Staff>();
-            Accounts = new List<Account>();
-            Currencies = new List<Currency>();
-            Name = name;
-            Id = Name.Substring(0, 3) + DateTime.Today.ToString("d");
-            Charges = new ServiceCharges();
-            Charges.AssignCharges(0, 5);
-            ChargesToOthers = new ServiceCharges();
-            ChargesToOthers.AssignCharges(2, 6);
-            Currency currency = new Currency("INR", 1);
-            Currencies.Add(currency);
-        }
     }
 }

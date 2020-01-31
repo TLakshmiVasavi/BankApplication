@@ -1,4 +1,6 @@
-﻿namespace BankApplication.Models
+﻿using BankApplication.Enums;
+
+namespace BankApplication.Models
 {
     class User
     {

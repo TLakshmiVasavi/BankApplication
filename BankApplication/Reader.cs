@@ -59,7 +59,7 @@ namespace BankApplication
         }
         public static string ReadPassword()
         {
-            string pwd = Reader.ReadString();
+            string pwd = Console.ReadLine();
             if (Regex.IsMatch(pwd, @"^((?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9])).{6,}"))
             {
                 return pwd;

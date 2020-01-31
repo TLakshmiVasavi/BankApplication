@@ -1,4 +1,5 @@
 ﻿using System;
+using BankApplication.Enums;
 
 namespace BankApplication.Models
 {
